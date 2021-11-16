@@ -46,12 +46,16 @@ jobs:
             readyMembersOptions.listeners = {
               stdout: (data: Buffer) => {
                 readyMembers += data.toString();
+              },
+              stderr: (data: Buffer) => {
               }
             };
             const phaseOptions = {};
             phaseOptions.listeners = {
               stdout: (data: Buffer) => {
                 phase += data.toString();
+              },
+              stderr: (data: Buffer) => {
               }
             };
             await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}'], readyMembersOptions);
