@@ -1,0 +1,46 @@
+name: Integration tests
+on: push
+
+jobs:
+  run-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: engineerd/setup-kind@v0.5.0
+        with:
+          version: "v0.11.1"
+
+      - name: Deploy Hazelcast Platform Operator
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/hazelcast/hazelcast-platform-operator-docs/main/bundle.yaml
+          kubectl wait --for=condition=available --timeout=600s deployment/hazelcast-platform-controller-manager
+
+      - name: Create Hazelcast Platform Enterprise cluster
+        run: |
+          kubectl create secret generic hazecast-license-key --from-literal key=${{ secrets.LICENSE }}
+          cat <<EOF | kubectl apply -f -
+          apiVersion: hazelcast.com/v1alpha1
+          kind: Hazelcast
+          metadata:
+            name: my-hazelcast
+          spec:
+            clusterSize: 3
+            repository: 'docker.io/hazelcast/hazelcast-enterprise'
+            version: '5.0-slim'
+            licenseKeySecret: hazelcast-license-key
+          EOF
+          kubectl wait --for=condition=ready pod/my-hazelcast-0 --timeout=300s
+          kubectl wait --for=condition=ready pod/my-hazelcast-1 --timeout=150s
+          kubectl wait --for=condition=ready pod/my-hazelcast-2 --timeout=150s
+          sleep 5
+          echo "::set-output name=phase::$(kubectl get hazelcast my-hazelcast -o jsonpath={.status.phase})"
+          echo "::set-output name=readyMembers::$(kubectl get hazelcast my-hazelcast -o jsonpath={.status.hazelcastClusterStatus.readyMembers})"
+
+      - name: Assert Status Phase
+        uses: actions/github-script@v3
+        with:
+          script: |
+            const phase = core.getInput('phase');
+            const readyMembers = core.getInput('readyMembers');
+            core.info('Output pahse is ' + phase);
+            core.info('Output readyMembers is ' + readyMembers);
