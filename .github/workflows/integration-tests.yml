@@ -55,6 +55,6 @@ jobs:
               }
             };
             await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}'], readyMembersOptions);
-            await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.phase}']);
+            await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.phase}'], phaseOptions);
             core.info('Output pahse is ' + phase);
             core.info('Output readyMembers is ' + readyMembers);
