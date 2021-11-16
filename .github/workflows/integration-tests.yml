@@ -17,7 +17,7 @@ jobs:
 
       - name: Create Hazelcast Platform Enterprise cluster
         run: |
-          kubectl create secret generic hazecast-license-key --from-literal key=${{ secrets.LICENSE }}
+          kubectl create secret generic hazelcast-license-key --from-literal key=${{ secrets.LICENSE }}
           cat <<EOF | kubectl apply -f -
           apiVersion: hazelcast.com/v1alpha1
           kind: Hazelcast
