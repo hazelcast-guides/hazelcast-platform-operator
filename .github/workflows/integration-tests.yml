@@ -31,8 +31,9 @@ jobs:
           EOF
           kubectl get hazelcast
           kubectl get po
+          kubectl get events
           sleep 5
-          kubectl wait --for=condition=ready pod/my-hazelcast-0 --timeout=600s
+          kubectl wait --for=condition=ready pod/my-hazelcast-0 --timeout=15m
           kubectl wait --for=condition=ready pod/my-hazelcast-1 --timeout=150s
           kubectl wait --for=condition=ready pod/my-hazelcast-2 --timeout=150s
           sleep 5
