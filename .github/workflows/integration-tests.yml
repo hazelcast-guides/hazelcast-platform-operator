@@ -37,7 +37,7 @@ jobs:
           echo "::set-output name=phase::$(kubectl get hazelcast my-hazelcast -o jsonpath={})"
 
       - name: Assert Status Phase
-        uses: actions/github-script@v3
+        uses: actions/github-script@v5
         with:
           script: |
             const readyMembers = await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}']);
