@@ -40,7 +40,21 @@ jobs:
         uses: actions/github-script@v5
         with:
           script: |
-            const readyMembers = await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}']);
-            const phase = await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.phase}']);
+            let readyMembers = '';
+            let phase = '';
+            const readyMembersOptions = {};
+            readyMembersOptions.listeners = {
+              stdout: (data: Buffer) => {
+                readyMembers += data.toString();
+              }
+            };
+            const phaseOptions = {};
+            phaseOptions.listeners = {
+              stdout: (data: Buffer) => {
+                phase += data.toString();
+              }
+            };
+            await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}'], readyMembersOptions);
+            await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.phase}']);
             core.info('Output pahse is ' + phase);
             core.info('Output readyMembers is ' + readyMembers);
