@@ -44,18 +44,18 @@ jobs:
             let phase = '';
             const readyMembersOptions = {};
             readyMembersOptions.listeners = {
-              stdout: (data: Buffer) => {
+              stdout: (data) => {
                 readyMembers += data.toString();
               },
-              stderr: (data: Buffer) => {
+              stderr: (data) => {
               }
             };
             const phaseOptions = {};
             phaseOptions.listeners = {
-              stdout: (data: Buffer) => {
+              stdout: (data) => {
                 phase += data.toString();
               },
-              stderr: (data: Buffer) => {
+              stderr: (data) => {
               }
             };
             await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}'], readyMembersOptions);
