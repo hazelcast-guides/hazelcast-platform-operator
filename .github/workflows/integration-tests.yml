@@ -29,6 +29,7 @@ jobs:
             version: '5.0-slim'
             licenseKeySecret: hazelcast-license-key
           EOF
+          sleep 5
           kubectl wait --for=condition=ready pod/my-hazelcast-0 --timeout=300s
           kubectl wait --for=condition=ready pod/my-hazelcast-1 --timeout=150s
           kubectl wait --for=condition=ready pod/my-hazelcast-2 --timeout=150s
