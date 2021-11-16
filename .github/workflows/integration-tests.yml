@@ -30,21 +30,17 @@ jobs:
             licenseKeySecret: hazelcast-license-key
           EOF
           sleep 30
-          kubectl get hazelcast
-          kubectl get po
-          kubectl get events
           kubectl wait --for=condition=ready pod/my-hazelcast-0 --timeout=5m
           kubectl wait --for=condition=ready pod/my-hazelcast-1 --timeout=150s
           kubectl wait --for=condition=ready pod/my-hazelcast-2 --timeout=150s
           sleep 5
-          echo "::set-output name=phase::$(kubectl get hazelcast my-hazelcast -o jsonpath={.status.phase})"
-          echo "::set-output name=readyMembers::$(kubectl get hazelcast my-hazelcast -o jsonpath={.status.hazelcastClusterStatus.readyMembers})"
+          echo "::set-output name=phase::$(kubectl get hazelcast my-hazelcast -o jsonpath={})"
 
       - name: Assert Status Phase
         uses: actions/github-script@v3
         with:
           script: |
-            const phase = core.getInput('phase');
-            const readyMembers = core.getInput('readyMembers');
+            const readyMembers = await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}']);
+            const phase = await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.phase}']);
             core.info('Output pahse is ' + phase);
             core.info('Output readyMembers is ' + readyMembers);
