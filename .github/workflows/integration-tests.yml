@@ -77,11 +77,6 @@ jobs:
             repository: 'hazelcast/management-center'
             version: '5.0'
             licenseKeySecret: hazelcast-license-key
-            externalConnectivity:
-              type: LoadBalancer
-            hazelcastClusters:
-              - address: hazelcast
-                name: dev
           EOF
           sleep 5
           kubectl wait --for=condition=ready pod/my-managementcenter-0 --timeout=5m
