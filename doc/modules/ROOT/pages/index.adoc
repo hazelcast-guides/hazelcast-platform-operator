@@ -107,7 +107,7 @@ To check that the Hazelcast cluster is formed, you can check the status of the H
 
 [source, shell]
 ----
-$ kubectl get hazelcast
+$ kubectl get hazelcast my-hazelcast
 NAME        STATUS    MEMBERS
 hazelcast   Running   3/3
 ----
@@ -116,7 +116,7 @@ For a more detailed view, you can see the `yaml` format.
 
 [source, shell]
 ----
-$ kubectl get hazelcast -o=yaml
+$ kubectl get hazelcast my-hazelcast -o=yaml
 apiVersion: v1
 items:
 - apiVersion: hazelcast.com/v1alpha1
@@ -171,7 +171,7 @@ Run the following command to check that the ManagementCenter was successfully de
 
 [source, shell]
 ----
-$ kubectl get managementcenter
+$ kubectl get managementcenter my-managementcenter
 NAME               STATUS
 managementcenter   Running
 ----
