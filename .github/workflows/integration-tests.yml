@@ -24,7 +24,7 @@ jobs:
           metadata:
             name: my-hazelcast
           spec:
-            clusterSize: 3
+            clusterSize: 2
             repository: 'docker.io/hazelcast/hazelcast-enterprise'
             version: '5.0-slim'
             licenseKeySecret: hazelcast-license-key
@@ -42,14 +42,6 @@ jobs:
           script: |
             let readyMembers = '';
             let phase = '';
-            const readyMembersOptions = {};
-            readyMembersOptions.listeners = {
-              stdout: (data) => {
-                readyMembers += data.toString();
-              },
-              stderr: (data) => {
-              }
-            };
             const phaseOptions = {};
             phaseOptions.listeners = {
               stdout: (data) => {
@@ -58,7 +50,19 @@ jobs:
               stderr: (data) => {
               }
             };
+            const readyMembersOptions = {};
+            readyMembersOptions.listeners = {
+              stdout: (data) => {
+                readyMembers += data.toString();
+              },
+              stderr: (data) => {
+              }
+            };
             await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}'], readyMembersOptions);
             await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.phase}'], phaseOptions);
-            core.info('Output pahse is ' + phase);
-            core.info('Output readyMembers is ' + readyMembers);
+            if (phase !== "Running") {
+              core.setFailed("Unexpected phase: ${phase}")
+            } 
+            if (readyMembers !== "3/3") {
+              core.setFailed("Unexpected ready members: ${readyMembers}")
+            }
