@@ -32,7 +32,6 @@ jobs:
           sleep 30
           kubectl wait --for=condition=ready pod/my-hazelcast-0 --timeout=5m
           kubectl wait --for=condition=ready pod/my-hazelcast-1 --timeout=150s
-          kubectl wait --for=condition=ready pod/my-hazelcast-2 --timeout=150s
           sleep 5
           echo "::set-output name=phase::$(kubectl get hazelcast my-hazelcast -o jsonpath={})"
 
