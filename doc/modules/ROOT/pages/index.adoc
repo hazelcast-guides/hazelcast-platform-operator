@@ -3,7 +3,7 @@
 :hazelcast: Hazelcast IMDG
 :framework: Kubernetes Operator
 
-= Hazelcast Platform Operator
+= Getting Started with Hazelcast Platform Operator
 
 This sample is a guideline on how to start and use Hazelcast Platform Operator.
 
