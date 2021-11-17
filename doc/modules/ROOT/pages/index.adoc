@@ -117,27 +117,21 @@ For a more detailed view, you can see the `yaml` format.
 [source, shell]
 ----
 $ kubectl get hazelcast my-hazelcast -o=yaml
-apiVersion: v1
-items:
-- apiVersion: hazelcast.com/v1alpha1
-  kind: Hazelcast
-  metadata:
-..................
-  spec:
-    clusterName: dev
-    clusterSize: 3
-    exposeExternally: {}
-    licenseKeySecret: hazelcast-license-key
-    repository: docker.io/hazelcast/hazelcast-enterprise
-    version: "5.0"
-  status:
-    hazelcastClusterStatus:
-      readyMembers: 3/3
-    phase: Running
-kind: List
+apiVersion: hazelcast.com/v1alpha1
+kind: Hazelcast
 metadata:
-  resourceVersion: ""
-  selfLink: ""
+..................
+spec:
+  clusterName: dev
+  clusterSize: 3
+  exposeExternally: {}
+  licenseKeySecret: hazelcast-license-key
+  repository: docker.io/hazelcast/hazelcast-enterprise
+  version: "5.0"
+status:
+  hazelcastClusterStatus:
+    readyMembers: 3/3
+  phase: Running
 ----
 
 == Create ManagementCenter
