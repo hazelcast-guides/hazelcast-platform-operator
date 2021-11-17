@@ -60,8 +60,8 @@ jobs:
             await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}'], readyMembersOptions);
             await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.phase}'], phaseOptions);
             if (phase !== "Running") {
-              core.setFailed("Unexpected phase: ${phase}")
+              core.setFailed(`Unexpected phase: ${phase}`)
             } 
             if (readyMembers !== "3/3") {
-              core.setFailed("Unexpected ready members: ${readyMembers}")
+              core.setFailed(`Unexpected ready members: ${readyMembers}`)
             }
