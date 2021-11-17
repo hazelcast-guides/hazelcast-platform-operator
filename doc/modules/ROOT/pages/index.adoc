@@ -24,7 +24,7 @@ To deploy Hazelcast Platform Operator, you need to apply `bundle.yaml` that incl
 
 [source, bash]
 ----
-kubectl apply -f https://raw.githubusercontent.com/hazelcast/hazelcast-platform-operator-docs/main/bundle.yaml
+kubectl apply -f https://repository.hazelcast.com/operator/bundle.yaml
 ----
 
 Check the CRDs to make sure they were successfully created:
@@ -216,7 +216,7 @@ Deletion of the `managementcenter` resource will not delete the `PersistentVolum
 Use `kubectl delete` command to undeploy the operator.
 [source, shell]
 ----
-kubectl delete -f https://raw.githubusercontent.com/hazelcast/hazelcast-platform-operator-docs/main/bundle.yaml
+kubectl delete -f https://repository.hazelcast.com/operator/bundle.yaml
 ----
 
 == Summary

@@ -12,7 +12,7 @@ jobs:
 
       - name: Deploy Hazelcast Platform Operator
         run: |
-          kubectl apply -f https://raw.githubusercontent.com/hazelcast/hazelcast-platform-operator-docs/main/bundle.yaml
+          kubectl apply -f https://repository.hazelcast.com/operator/bundle.yaml
           kubectl wait --for=condition=available --timeout=600s deployment/hazelcast-platform-controller-manager
 
       - name: Create Hazelcast Platform Enterprise cluster
