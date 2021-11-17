@@ -24,7 +24,7 @@ jobs:
           metadata:
             name: my-hazelcast
           spec:
-            clusterSize: 2
+            clusterSize: 3
             repository: 'docker.io/hazelcast/hazelcast-enterprise'
             version: '5.0-slim'
             licenseKeySecret: hazelcast-license-key
@@ -32,10 +32,11 @@ jobs:
           sleep 30
           kubectl wait --for=condition=ready pod/my-hazelcast-0 --timeout=5m
           kubectl wait --for=condition=ready pod/my-hazelcast-1 --timeout=150s
+          kubectl wait --for=condition=ready pod/my-hazelcast-2 --timeout=150s
           sleep 5
           echo "::set-output name=phase::$(kubectl get hazelcast my-hazelcast -o jsonpath={})"
 
-      - name: Assert Status Phase
+      - name: Assert Hazelcast Status
         uses: actions/github-script@v5
         with:
           script: |
@@ -57,11 +58,50 @@ jobs:
               stderr: (data) => {
               }
             };
-            await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}'], readyMembersOptions);
             await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.phase}'], phaseOptions);
+            await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}'], readyMembersOptions);
             if (phase !== "Running") {
               core.setFailed(`Unexpected phase: ${phase}`)
             } 
             if (readyMembers !== "3/3") {
               core.setFailed(`Unexpected ready members: ${readyMembers}`)
             }
+
+      - name: Create ManagementCenter
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: hazelcast.com/v1alpha1
+          kind: ManagementCenter
+          metadata:
+            name: my-managementcenter
+          spec:
+            repository: 'hazelcast/management-center'
+            version: '5.0'
+            licenseKeySecret: hazelcast-license-key
+            externalConnectivity:
+              type: LoadBalancer
+            hazelcastClusters:
+              - address: hazelcast
+                name: dev
+          EOF
+          sleep 5
+          kubectl wait --for=condition=ready pod/my-managementcenter-0 --timeout=5m
+
+      - name: Assert ManagementCenter Status
+        uses: actions/github-script@v5
+        with:
+          script: |
+            let phase = '';
+            const phaseOptions = {};
+            phaseOptions.listeners = {
+              stdout: (data) => {
+                phase += data.toString();
+              },
+              stderr: (data) => {
+              }
+            };
+            await exec.exec('kubectl', ['get', 'managementcenter', 'my-managementcenter', '-o=jsonpath={.status.phase}'], phaseOptions);
+            if (phase !== "Running") {
+              core.setFailed(`Unexpected phase: ${phase}`)
+            }
+
