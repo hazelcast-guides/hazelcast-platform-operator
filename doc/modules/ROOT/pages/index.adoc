@@ -11,7 +11,7 @@ include::{templates-url}/link-to-repo.adoc[]
 
 == What You'll Learn
 
-In this guide, you will deploy the Hazelcast cluster to Kubernetes using Hazelcast Platform Operator.
+In this guide, you will deploy a Hazelcast cluster to Kubernetes using Hazelcast Platform Operator.
 
 == Prerequisites
 
@@ -187,7 +187,7 @@ managementcenter   LoadBalancer   10.96.200.154   35.241.11.15  8080:31720/TCP,4
 
 Open `[MANAGEMENT-CENTER-EXTERNAL-IP]:8080` in your browser to access the ManagementCenter UI.
 
-== Clen up
+== Clean up
 
 To delete the Hazelcast cluster and ManagementCenter, delete the Custom Resources.
 [source, shell]
@@ -210,7 +210,7 @@ kubectl delete secret hazelcast-license-key
 
 [NOTE]
 ====
-Deleting of the `managementcenter` resource will not delete the `PersistentVolume` and the `PersistentVolumeClaim`. You will need to delete it manually.
+Deletion of the `managementcenter` resource will not delete the `PersistentVolume` and the `PersistentVolumeClaim`. You will need to delete them manually.
 ====
 
 Use `kubectl delete` command to undeploy the operator.
@@ -221,7 +221,7 @@ kubectl delete -f https://raw.githubusercontent.com/hazelcast/hazelcast-platform
 
 == Summary
 
-In this example, we have seen how to use Hazelcast Platform Operator to deploy and manage the Hazelcast Platform cluster and ManagementCenter.
+In this example, we have seen how to use Hazelcast Platform Operator to deploy and manage a Hazelcast Platform cluster and ManagementCenter.
 
 == See Also
 
