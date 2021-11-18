@@ -71,6 +71,8 @@ apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
   name: my-hazelcast
+spec:
+  repository: 'docker.io/hazelcast/hazelcast-enterprise'
 EOF
 ----
 --
@@ -86,10 +88,6 @@ apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
   name: my-hazelcast
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast'
-  version: '5.0-slim'
 EOF
 ----
 --
@@ -144,14 +142,6 @@ spec:
   repository: 'hazelcast/management-center'
   version: '5.0'
   licenseKeySecret: hazelcast-license-key
-  externalConnectivity:
-    type: LoadBalancer
-  hazelcastClusters:
-    - address: hazelcast
-      name: dev
-  persistence:
-    enabled: true
-    size: 10Gi
 EOF
 ----
 
