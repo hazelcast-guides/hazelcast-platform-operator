@@ -127,7 +127,7 @@ spec:
   exposeExternally: {}
   licenseKeySecret: hazelcast-license-key
   repository: docker.io/hazelcast/hazelcast-enterprise
-  version: "5.0"
+  version: "5.0-slim"
 status:
   hazelcastClusterStatus:
     readyMembers: 3/3
