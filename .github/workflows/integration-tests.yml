@@ -1,101 +1,114 @@
 name: Integration tests
-on: push
+
+on:
+  push:
+  pull_request:
+
+env:
+  CLUSTER_NAME: kind
+  HELM_RELEASE: operator
+  LICENSE_SECRET: hazelcast-license-key
+  AWS_REGION: us-east-1
 
 jobs:
   run-tests:
     name: Integration tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: engineerd/setup-kind@v0.5.0
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          version: "v0.11.1"
+          aws-access-key-id: ${{ secrets.CN_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.CN_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy Hazelcast Platform Operator
+      - name: Get Secrets
+        uses: aws-actions/aws-secretsmanager-get-secrets@v3
+        with:
+          secret-ids: |
+            HZ_LICENSE_KEY,CN/HZ_LICENSE_KEY
+
+      - name: Create Kind cluster
+        uses: helm/kind-action@v1.14.0
+        with:
+          cluster_name: ${{ env.CLUSTER_NAME }}
+          config: |
+            kind: Cluster
+            apiVersion: kind.x-k8s.io/v1alpha4
+            nodes:
+              - role: control-plane
+              - role: worker
+              - role: worker
+              - role: worker
+
+      - name: Install Hazelcast Platform Operator (Helm)
         run: |
-          kubectl apply -f https://repository.hazelcast.com/operator/bundle.yaml
-          kubectl wait --for=condition=available --timeout=600s deployment/hazelcast-platform-controller-manager
+          set -euo pipefail
+          STABLE_VERSION=$(
+            curl -fsSL https://artifacthub.io/api/v1/packages/helm/hazelcast/hazelcast-platform-operator \
+              | jq -r '.available_versions | map(select(.version | contains("snapshot") | not)) | .[0].version'
+          )
+          helm repo add hazelcast https://hazelcast-charts.s3.amazonaws.com
+          helm repo update
+          helm install "${HELM_RELEASE}" hazelcast/hazelcast-platform-operator \
+            --version="${STABLE_VERSION}" \
+            --set installCRDs=true \
+            --set phoneHomeEnabled=false \
+            --wait
+          kubectl rollout status "deployment.apps/${HELM_RELEASE}-hazelcast-platform-operator" --timeout=300s
+          kubectl wait pods -l app.kubernetes.io/name=hazelcast-platform-operator \
+            --for=condition=Ready --timeout=300s
+
+      - name: Create license secret
+        run: |
+          kubectl create secret generic "${LICENSE_SECRET}" \
+            --from-literal=license-key="${{ env.HZ_LICENSE_KEY }}"
 
       - name: Create Hazelcast Platform Enterprise cluster
         run: |
-          kubectl create secret generic hazelcast-license-key --from-literal license-key=${{ secrets.LICENSE }}
-          cat <<EOF | kubectl apply -f -
+          kubectl apply -f - <<EOF
           apiVersion: hazelcast.com/v1alpha1
           kind: Hazelcast
           metadata:
             name: my-hazelcast
           spec:
             clusterSize: 3
-            repository: 'docker.io/hazelcast/hazelcast-enterprise'
-            version: '5.0-slim'
-            licenseKeySecret: hazelcast-license-key
+            repository: docker.io/hazelcast/hazelcast-enterprise
+            licenseKeySecretName: ${LICENSE_SECRET}
           EOF
-          sleep 30
-          kubectl wait --for=condition=ready pod/my-hazelcast-0 --timeout=5m
-          kubectl wait --for=condition=ready pod/my-hazelcast-1 --timeout=150s
-          kubectl wait --for=condition=ready pod/my-hazelcast-2 --timeout=150s
-          sleep 5
 
-      - name: Assert Hazelcast Status
-        uses: actions/github-script@v5
-        with:
-          script: |
-            let readyMembers = '';
-            let phase = '';
-            const phaseOptions = {};
-            phaseOptions.listeners = {
-              stdout: (data) => {
-                phase += data.toString();
-              },
-              stderr: (data) => {
-              }
-            };
-            const readyMembersOptions = {};
-            readyMembersOptions.listeners = {
-              stdout: (data) => {
-                readyMembers += data.toString();
-              },
-              stderr: (data) => {
-              }
-            };
-            await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.phase}'], phaseOptions);
-            await exec.exec('kubectl', ['get', 'hazelcast', 'my-hazelcast', '-o=jsonpath={.status.hazelcastClusterStatus.readyMembers}'], readyMembersOptions);
-            if (phase !== "Running") {
-              core.setFailed(`Unexpected phase: ${phase}`)
-            } 
-            if (readyMembers !== "3/3") {
-              core.setFailed(`Unexpected ready members: ${readyMembers}`)
-            }
-
-      - name: Create ManagementCenter
+      - name: Assert Hazelcast status
         run: |
-          cat <<EOF | kubectl apply -f -
+          kubectl wait --for=jsonpath='{.status.phase}'=Running \
+            --timeout=600s hazelcast/my-hazelcast
+          READY=$(
+            kubectl get hazelcast my-hazelcast \
+              -o jsonpath='{.status.hazelcastClusterStatus.readyMembers}'
+          )
+          if [ "${READY}" != "3/3" ]; then
+            echo "Unexpected ready members: ${READY}"
+            kubectl get hazelcast my-hazelcast -o yaml
+            kubectl get pods -l app.kubernetes.io/instance=my-hazelcast
+            exit 1
+          fi
+
+      - name: Create Management Center
+        run: |
+          kubectl apply -f - <<EOF
           apiVersion: hazelcast.com/v1alpha1
           kind: ManagementCenter
           metadata:
             name: my-managementcenter
           spec:
-            repository: 'hazelcast/management-center'
-            version: '5.0'
-            licenseKeySecret: hazelcast-license-key
+            repository: docker.io/hazelcast/management-center
+            licenseKeySecretName: ${LICENSE_SECRET}
+            hazelcastClusters:
+              - address: my-hazelcast
+                name: dev
           EOF
-          sleep 5
-          kubectl wait --for=condition=ready pod/my-managementcenter-0 --timeout=5m
 
-      - name: Assert ManagementCenter Status
-        uses: actions/github-script@v5
-        with:
-          script: |
-            let phase = '';
-            const phaseOptions = {};
-            phaseOptions.listeners = {
-              stdout: (data) => {
-                phase += data.toString();
-              },
-              stderr: (data) => {
-              }
-            };
-            await exec.exec('kubectl', ['get', 'managementcenter', 'my-managementcenter', '-o=jsonpath={.status.phase}'], phaseOptions);
-            if (phase !== "Running") {
-              core.setFailed(`Unexpected phase: ${phase}`)
-            }
-
+      - name: Assert Management Center status
+        run: |
+          kubectl wait --for=jsonpath='{.status.phase}'=Running \
+            --timeout=600s managementcenter/my-managementcenter
