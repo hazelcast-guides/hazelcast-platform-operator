@@ -29,18 +29,23 @@ jobs:
           secret-ids: |
             HZ_LICENSE_KEY,CN/HZ_LICENSE_KEY
 
+      - name: Create Kind config
+        run: |
+          cat > kind-config.yaml <<'EOF'
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          nodes:
+            - role: control-plane
+            - role: worker
+            - role: worker
+            - role: worker
+          EOF
+
       - name: Create Kind cluster
         uses: helm/kind-action@v1.14.0
         with:
+          config: ./kind-config.yaml
           cluster_name: ${{ env.CLUSTER_NAME }}
-          config: |
-            kind: Cluster
-            apiVersion: kind.x-k8s.io/v1alpha4
-            nodes:
-              - role: control-plane
-              - role: worker
-              - role: worker
-              - role: worker
 
       - name: Install Hazelcast Platform Operator (Helm)
         run: |
