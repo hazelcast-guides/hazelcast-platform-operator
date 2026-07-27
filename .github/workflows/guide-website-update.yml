@@ -10,7 +10,7 @@ jobs:
   antora:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7.0.1
         with:
           repository: hazelcast-guides/guides-site
           ref: master
